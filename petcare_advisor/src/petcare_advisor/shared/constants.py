@@ -1,0 +1,64 @@
+"""Constants used across the petcare advisor system."""
+
+# Triage Levels
+TRIAGE_INFO = "INFO"
+TRIAGE_LOW = "LOW"
+TRIAGE_MODERATE = "MODERATE"
+TRIAGE_HIGH = "HIGH"
+TRIAGE_EMERGENCY = "EMERGENCY"
+
+TRIAGE_LEVELS = [
+    TRIAGE_INFO,
+    TRIAGE_LOW,
+    TRIAGE_MODERATE,
+    TRIAGE_HIGH,
+    TRIAGE_EMERGENCY,
+]
+
+# Triage Urgency Scores (0-5)
+URGENCY_SCORE_INFO = 0
+URGENCY_SCORE_LOW = 1
+URGENCY_SCORE_MODERATE = 2
+URGENCY_SCORE_HIGH = 3
+URGENCY_SCORE_EMERGENCY = 4
+URGENCY_SCORE_CRITICAL = 5
+
+# Output Keys for Agent Results
+OUTPUT_KEY_SYMPTOM_INTAKE = "symptom_intake_result"
+OUTPUT_KEY_VISION_ANALYSIS = "vision_analysis_result"
+OUTPUT_KEY_MEDICAL_ANALYSIS = "medical_analysis_result"
+OUTPUT_KEY_TRIAGE = "triage_result"
+OUTPUT_KEY_CAREPLAN = "careplan_result"
+
+# Supported Pet Species
+SPECIES_DOG = "dog"
+SPECIES_CAT = "cat"
+SPECIES_BIRD = "bird"
+SPECIES_RABBIT = "rabbit"
+SPECIES_OTHER = "other"
+
+SUPPORTED_SPECIES = [
+    SPECIES_DOG,
+    SPECIES_CAT,
+    SPECIES_BIRD,
+    SPECIES_RABBIT,
+    SPECIES_OTHER,
+]
+
+# Red Flag Indicators
+RED_FLAG_BLEEDING = "bleeding"
+RED_FLAG_SEIZURE = "seizure"
+RED_FLAG_COLLAPSE = "collapse"
+RED_FLAG_DIFFICULTY_BREATHING = "difficulty_breathing"
+RED_FLAG_UNCONSCIOUS = "unconscious"
+RED_FLAG_SEVERE_PAIN = "severe_pain"
+
+RED_FLAGS = [
+    RED_FLAG_BLEEDING,
+    RED_FLAG_SEIZURE,
+    RED_FLAG_COLLAPSE,
+    RED_FLAG_DIFFICULTY_BREATHING,
+    RED_FLAG_UNCONSCIOUS,
+    RED_FLAG_SEVERE_PAIN,
+]
+
