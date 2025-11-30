@@ -7,7 +7,8 @@ from typing import Dict, Any
 import uvicorn
 
 from .config import get_settings
-from .shared.types import TriageRequest, TriageResponse, GraphState
+from .shared.types import TriageRequest, TriageResponse, GraphState, QuestionRequest, QuestionResponse
+import httpx
 from .agents.root_orchestrator import root_orchestrator
 
 # Configure logging
@@ -58,6 +59,7 @@ async def root() -> Dict[str, Any]:
         "endpoints": {
             "health": "/health",
             "triage": "/api/triage",
+            "question": "/api/question",
             "docs": "/docs",
             "redoc": "/redoc"
         },
@@ -187,6 +189,152 @@ async def triage_endpoint(request: TriageRequest) -> TriageResponse:
             success=False,
             report=None,
             error=str(e),
+        )
+
+
+@app.post("/api/question", response_model=QuestionResponse)
+async def question_endpoint(request: QuestionRequest) -> QuestionResponse:
+    """Follow-up question endpoint that answers user questions about diagnosis.
+
+    This endpoint:
+    - Accepts a user question about the current diagnosis
+    - Uses Gemini API to generate a professional veterinary response
+    - Returns the answer in Korean
+
+    Args:
+        request: Question request with user question and context
+
+    Returns:
+        Question response with AI-generated answer or error
+    """
+    try:
+        logger.info(f"[API] Received question: {request.question[:50]}...")
+
+        # Get Gemini API key
+        gemini_api_key = settings.gemini_api_key
+        if not gemini_api_key:
+            logger.error("[API] Gemini API key not configured")
+            return QuestionResponse(
+                success=False,
+                answer=None,
+                error="Gemini API 키가 설정되지 않았습니다."
+            )
+
+        # Extract pet info
+        pet_info = request.pet_info or {}
+        pet_name = pet_info.get('petName', '반려동물')
+        species = pet_info.get('species', 'dog')
+        species_kor = '개' if species == 'dog' else '고양이' if species == 'cat' else species
+        breed = pet_info.get('breed', '미등록')
+        age = pet_info.get('age', '미등록')
+        weight = pet_info.get('weight')
+
+        # Extract diagnosis info
+        diagnosis = request.diagnosis_result or {}
+        diagnosis_name = diagnosis.get('diagnosis', '일반 건강 이상')
+        risk_level = diagnosis.get('riskLevel', diagnosis.get('emergency', 'moderate'))
+        triage_level = diagnosis.get('triage_level', 'yellow')
+        triage_score = diagnosis.get('triage_score', 'N/A')
+        actions = diagnosis.get('actions', [])
+        owner_sheet = diagnosis.get('ownerSheet', {})
+        immediate_actions = owner_sheet.get('immediate_home_actions', actions)
+        things_to_avoid = owner_sheet.get('things_to_avoid', [])
+        monitoring_guide = owner_sheet.get('monitoring_guide', [])
+        care_guide = diagnosis.get('careGuide', '')
+
+        # Build prompt
+        prompt = f"""당신은 전문 수의사입니다. 반려동물 보호자의 질문에 대해 정확하고 친절하게 답변해주세요.
+
+[반려동물 정보]
+- 이름: {pet_name}
+- 종류: {species_kor}
+- 품종: {breed}
+- 나이: {age}세
+{f'- 체중: {weight}kg' if weight else ''}
+
+[현재 진단 결과]
+- 진단명: {diagnosis_name}
+- 위험도: {risk_level}
+- 응급도: {triage_level}
+- Triage Score: {triage_score}/5
+
+[권장 조치사항]
+{chr(10).join([f'{i+1}. {a}' for i, a in enumerate(immediate_actions)]) if immediate_actions else '추가 조치사항 없음'}
+
+[피해야 할 행동]
+{chr(10).join([f'{i+1}. {a}' for i, a in enumerate(things_to_avoid)]) if things_to_avoid else '없음'}
+
+[관찰 포인트]
+{chr(10).join([f'{i+1}. {a}' for i, a in enumerate(monitoring_guide)]) if monitoring_guide else '없음'}
+
+{f'[케어 가이드]{chr(10)}{care_guide}' if care_guide else ''}
+
+[보호자 질문]
+{request.question}
+
+위 질문에 대해 다음을 포함하여 답변해주세요:
+1. 질문에 대한 구체적이고 실용적인 답변
+2. 현재 진단 결과와 연관된 조언
+3. 구체적인 실행 방법 (예: 음식 추천, 케어 방법, 주의사항)
+4. 필요시 병원 방문 시점 안내
+
+답변은 친절하고 이해하기 쉽게 작성하되, 전문적이고 정확해야 합니다. 추측이나 검증되지 않은 정보는 제공하지 마세요."""
+
+        # Call Gemini API
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_api_key}",
+                json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "topK": 40,
+                        "topP": 0.95,
+                        "maxOutputTokens": 1024,
+                    }
+                },
+                timeout=30.0
+            )
+
+            if response.status_code != 200:
+                logger.error(f"[API] Gemini API error: {response.status_code}")
+                return QuestionResponse(
+                    success=False,
+                    answer=None,
+                    error=f"Gemini API 호출 실패: {response.status_code}"
+                )
+
+            data = response.json()
+
+            if not data.get("candidates") or not data["candidates"][0].get("content"):
+                return QuestionResponse(
+                    success=False,
+                    answer=None,
+                    error="Gemini API 응답 형식 오류"
+                )
+
+            answer = data["candidates"][0]["content"]["parts"][0]["text"]
+
+            if not answer or answer.strip() == "":
+                return QuestionResponse(
+                    success=False,
+                    answer=None,
+                    error="빈 답변을 받았습니다"
+                )
+
+            logger.info("[API] Question answered successfully")
+            return QuestionResponse(
+                success=True,
+                answer=answer.strip(),
+                error=None
+            )
+
+    except Exception as e:
+        logger.error(f"[API] Error in question endpoint: {e}", exc_info=True)
+        return QuestionResponse(
+            success=False,
+            answer=None,
+            error=str(e)
         )
 
 
