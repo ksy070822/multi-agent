@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ["python312", "pip"]
+
+[phases.install]
+cmds = [
+  "cd petcare_advisor && pip install -r ../requirements.txt",
+  "cd petcare_advisor && pip install -e ."
+]
+
+[phases.build]
+cmds = []
+
+[start]
+cmd = "cd petcare_advisor && PYTHONPATH=src python -m uvicorn petcare_advisor.main:app --host 0.0.0.0 --port $PORT"
+
