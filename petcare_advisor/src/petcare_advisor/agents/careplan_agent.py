@@ -56,8 +56,12 @@ def _careplan_agent_function(
     medical_structured = medical_data.get("structured_data", {})
     triage_structured = triage_data.get("structured_data", {})
     
+    # 종 정보 추출
+    species = symptom_structured.get('species', '알 수 없음')
+    
     # Build context (한글)
     context_parts = []
+    context_parts.append(f"종: {species}")
     context_parts.append(f"응급도 레벨: {triage_structured.get('triage_level', '알 수 없음')}")
     context_parts.append(f"응급도 점수: {triage_structured.get('urgency_score', 0)}")
     context_parts.append(f"주요 증상: {', '.join(symptom_structured.get('main_symptoms', []))}")
@@ -70,7 +74,9 @@ def _careplan_agent_function(
     context = "\n".join(context_parts)
     
     # System prompt for careplan (병원 컨셉 - 치료 계획실 + 약국)
-    system_prompt = """당신은 [치료 계획실 담당자]이자 [약국 상담사]입니다. 주치의 선생님의 진단과 응급실의 위급도 판단을 바탕으로, 보호자가 바로 이해하고 따라 할 수 있는 실용적인 조언을 제공합니다.
+    system_prompt = f"""당신은 [치료 계획실 담당자]이자 [약국 상담사]입니다. 주치의 선생님의 진단과 응급실의 위급도 판단을 바탕으로, 보호자가 바로 이해하고 따라 할 수 있는 실용적인 조언을 제공합니다.
+
+**중요**: 현재 환자는 **{species}**입니다. 모든 케어 플랜, 홈 케어 지침, 주의사항은 반드시 {species}에 특화된 내용이어야 합니다. 다른 종에 대한 일반적인 조언을 제공하지 마세요.
 
 말투 지침:
 - 보호자가 바로 이해하고 따라 할 수 있는 실용적인 조언을 제공합니다

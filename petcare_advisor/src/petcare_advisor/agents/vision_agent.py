@@ -60,13 +60,18 @@ def _vision_analysis_function(
     
     # Build context from symptom data (한글)
     symptom_context = ""
+    species = "알 수 없음"
     if symptom_data:
-        symptoms = symptom_data.get("structured_data", {}).get("main_symptoms", [])
+        symptom_structured = symptom_data.get("structured_data", {})
+        symptoms = symptom_structured.get("main_symptoms", [])
+        species = symptom_structured.get("species", "알 수 없음")
         if symptoms:
             symptom_context = f"반려동물 증상: {', '.join(symptoms)}"
     
     # System prompt for vision analysis (병원 컨셉 - 검사실 분석관)
-    system_prompt = """당신은 동물병원의 [검사실 분석관]입니다. 보호자가 제공한 사진, 영상, 기록을 바탕으로 차분하고 분석적인 설명을 제공합니다.
+    system_prompt = f"""당신은 동물병원의 [검사실 분석관]입니다. 보호자가 제공한 사진, 영상, 기록을 바탕으로 차분하고 분석적인 설명을 제공합니다.
+
+**중요**: 현재 환자는 **{species}**입니다. 이미지 분석 시 반드시 {species}에 특화된 특징을 고려하세요. 다른 종의 일반적인 특징을 적용하지 마세요.
 
 말투 지침:
 - 차분하고 분석적인 설명을 제공합니다

@@ -88,11 +88,38 @@ async def triage_endpoint(request: TriageRequest) -> TriageResponse:
     try:
         logger.info(f"[API] Received triage request: {request.symptom_description[:100]}...")
         
+        # 종 정보 정규화 (dog, cat 등으로 통일)
+        species_normalized = None
+        if request.species:
+            species_lower = request.species.lower()
+            if species_lower in ['cat', '고양이', 'cat']:
+                species_normalized = '고양이'
+            elif species_lower in ['dog', '개', '강아지', 'dog']:
+                species_normalized = '개'
+            elif species_lower in ['rabbit', '토끼']:
+                species_normalized = '토끼'
+            elif species_lower in ['hamster', '햄스터']:
+                species_normalized = '햄스터'
+            elif species_lower in ['bird', '새']:
+                species_normalized = '새'
+            elif species_lower in ['hedgehog', '고슴도치']:
+                species_normalized = '고슴도치'
+            elif species_lower in ['reptile', '파충류']:
+                species_normalized = '파충류'
+            else:
+                species_normalized = request.species
+        
         # Initialize GraphState
         # 구조화된 데이터가 있으면 symptom_description에 포함
         enhanced_description = request.symptom_description
+        
+        # 종 정보를 명확히 포함
+        if species_normalized:
+            enhanced_description = f"[종: {species_normalized}] {enhanced_description}"
+        
+        # 구조화된 데이터가 있으면 추가
         if request.department and request.symptom_tags:
-            enhanced_description = f"[진료과: {request.department}] [증상 태그: {', '.join(request.symptom_tags)}] {request.free_text or request.symptom_description}"
+            enhanced_description = f"[종: {species_normalized or '알 수 없음'}] [진료과: {request.department}] [증상 태그: {', '.join(request.symptom_tags)}] {request.free_text or request.symptom_description}"
             if request.follow_up_answers:
                 answers_text = ' '.join([f"{k}: {v}" for k, v in request.follow_up_answers.items()])
                 enhanced_description += f" [추가 정보: {answers_text}]"

@@ -50,8 +50,12 @@ def _triage_agent_function(
     symptom_structured = symptom_data.get("structured_data", {})
     medical_structured = medical_data.get("structured_data", {})
     
+    # 종 정보 추출
+    species = symptom_structured.get('species', '알 수 없음')
+    
     # Build context (한글)
     context_parts = []
+    context_parts.append(f"종: {species}")
     context_parts.append(f"주요 증상: {', '.join(symptom_structured.get('main_symptoms', []))}")
     context_parts.append(f"위험 신호: {', '.join(symptom_structured.get('red_flags', []))}")
     context_parts.append(f"심각도: {symptom_structured.get('severity_perception', '알 수 없음')}")
@@ -64,7 +68,9 @@ def _triage_agent_function(
     context = "\n".join(context_parts)
     
     # System prompt for triage (병원 컨셉 - 응급실 트리아지 담당)
-    system_prompt = """당신은 동물병원의 [응급실 트리아지 담당자]입니다. 주치의 선생님의 진단 결과를 바탕으로 현재 상황이 얼마나 급한지 분류하는 것이 당신의 역할입니다.
+    system_prompt = f"""당신은 동물병원의 [응급실 트리아지 담당자]입니다. 주치의 선생님의 진단 결과를 바탕으로 현재 상황이 얼마나 급한지 분류하는 것이 당신의 역할입니다.
+
+**중요**: 현재 환자는 **{species}**입니다. 응급도 판단은 반드시 {species}에 특화된 기준을 사용해야 합니다. 다른 종의 기준을 적용하지 마세요.
 
 말투 지침:
 - 빠르고 간단하며 직접적이어야 합니다

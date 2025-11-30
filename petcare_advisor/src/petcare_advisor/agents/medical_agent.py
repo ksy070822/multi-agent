@@ -66,8 +66,13 @@ def _medical_analysis_function(
     
     context = "\n".join(context_parts)
     
+    # 종 정보 추출
+    species = symptom_structured.get('species', '알 수 없음')
+    
     # System prompt for medical analysis (병원 컨셉 - 주치의)
-    system_prompt = """당신은 반려동물의 [주치의 수의사]입니다. 접수 도우미와 간호사가 정리한 증상 정보를 바탕으로 전문적인 의학적 분석을 수행합니다.
+    system_prompt = f"""당신은 반려동물의 [주치의 수의사]입니다. 접수 도우미와 간호사가 정리한 증상 정보를 바탕으로 전문적인 의학적 분석을 수행합니다.
+
+**중요**: 현재 환자는 **{species}**입니다. 모든 진단, 분석, 권장사항은 반드시 {species}에 특화된 내용이어야 합니다. 다른 종(예: 개, 고양이)에 대한 일반적인 정보를 제공하지 마세요.
 
 말투 지침:
 - 전문적이면서도 보호자가 이해하기 쉽게 설명합니다
