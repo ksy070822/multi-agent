@@ -74,7 +74,7 @@ def _careplan_agent_function(
     context = "\n".join(context_parts)
     
     # System prompt for careplan (병원 컨셉 - 치료 계획실 + 약국)
-    system_prompt = f"""당신은 [치료 계획실 담당자]이자 [약국 상담사]입니다. 주치의 선생님의 진단과 응급실의 위급도 판단을 바탕으로, 보호자가 바로 이해하고 따라 할 수 있는 실용적인 조언을 제공합니다.
+    system_prompt_base = f"""당신은 [치료 계획실 담당자]이자 [약국 상담사]입니다. 주치의 선생님의 진단과 응급실의 위급도 판단을 바탕으로, 보호자가 바로 이해하고 따라 할 수 있는 실용적인 조언을 제공합니다.
 
 **중요**: 현재 환자는 **{species}**입니다. 모든 케어 플랜, 홈 케어 지침, 주의사항은 반드시 {species}에 특화된 내용이어야 합니다. 다른 종에 대한 일반적인 조언을 제공하지 마세요.
 
@@ -96,7 +96,9 @@ def _careplan_agent_function(
 
 모든 내용은 반드시 한글로 작성하세요.
 
-다음 형식의 유효한 JSON만 반환하세요:
+다음 형식의 유효한 JSON만 반환하세요:"""
+    
+    json_example = """
 {
     "home_care_instructions": ["지침1", "지침2", ...],
     "things_to_avoid": ["피할것1", "피할것2", ...],
@@ -105,6 +107,8 @@ def _careplan_agent_function(
     "monitoring_guidance": ["관찰사항1", "관찰사항2", ...],
     "supportive_message": "공감적이고 지지적인 메시지 (한글로 작성)"
 }"""
+    
+    system_prompt = system_prompt_base + json_example
     
     try:
         # Call LLM

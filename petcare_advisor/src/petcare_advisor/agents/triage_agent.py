@@ -68,7 +68,7 @@ def _triage_agent_function(
     context = "\n".join(context_parts)
     
     # System prompt for triage (병원 컨셉 - 응급실 트리아지 담당)
-    system_prompt = f"""당신은 동물병원의 [응급실 트리아지 담당자]입니다. 주치의 선생님의 진단 결과를 바탕으로 현재 상황이 얼마나 급한지 분류하는 것이 당신의 역할입니다.
+    system_prompt_base = f"""당신은 동물병원의 [응급실 트리아지 담당자]입니다. 주치의 선생님의 진단 결과를 바탕으로 현재 상황이 얼마나 급한지 분류하는 것이 당신의 역할입니다.
 
 **중요**: 현재 환자는 **{species}**입니다. 응급도 판단은 반드시 {species}에 특화된 기준을 사용해야 합니다. 다른 종의 기준을 적용하지 마세요.
 
@@ -100,7 +100,9 @@ def _triage_agent_function(
 
 모든 텍스트는 반드시 한글로 작성하세요.
 
-다음 형식의 유효한 JSON만 반환하세요:
+다음 형식의 유효한 JSON만 반환하세요:"""
+    
+    json_example = """
 {
     "urgency_score": 숫자 (0-5),
     "triage_level": "INFO|LOW|MODERATE|HIGH|EMERGENCY",
@@ -108,6 +110,8 @@ def _triage_agent_function(
     "risk_assessment": "위험 평가 설명 (한글로 작성)",
     "time_sensitivity": 숫자 (수의사 방문 권장 시간, INFO의 경우 null)
 }"""
+    
+    system_prompt = system_prompt_base + json_example
     
     try:
         # Call LLM

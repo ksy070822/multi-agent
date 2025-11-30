@@ -70,7 +70,8 @@ def _medical_analysis_function(
     species = symptom_structured.get('species', '알 수 없음')
     
     # System prompt for medical analysis (병원 컨셉 - 주치의)
-    system_prompt = f"""당신은 반려동물의 [주치의 수의사]입니다. 접수 도우미와 간호사가 정리한 증상 정보를 바탕으로 전문적인 의학적 분석을 수행합니다.
+    # JSON 예시의 중괄호를 이스케이프하기 위해 f-string과 일반 문자열을 분리
+    system_prompt_base = f"""당신은 반려동물의 [주치의 수의사]입니다. 접수 도우미와 간호사가 정리한 증상 정보를 바탕으로 전문적인 의학적 분석을 수행합니다.
 
 **중요**: 현재 환자는 **{species}**입니다. 모든 진단, 분석, 권장사항은 반드시 {species}에 특화된 내용이어야 합니다. 다른 종(예: 개, 고양이)에 대한 일반적인 정보를 제공하지 마세요.
 
@@ -89,7 +90,9 @@ def _medical_analysis_function(
 
 모든 텍스트는 반드시 한글로 작성하세요.
 
-다음 형식의 유효한 JSON만 반환하세요:
+다음 형식의 유효한 JSON만 반환하세요:"""
+    
+    json_example = """
 {
     "differential_diagnosis": [
         {"condition": "질환명", "likelihood": "높음|보통|낮음", "reasoning": "이유 설명"},
@@ -103,6 +106,8 @@ def _medical_analysis_function(
     "certainty_level": "높음|보통|낮음",
     "notes": "추가 메모"
 }"""
+    
+    system_prompt = system_prompt_base + json_example
     
     try:
         # Call LLM
