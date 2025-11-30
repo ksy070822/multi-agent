@@ -1,3 +1,4 @@
+# Railway Nixpacks configuration
 [phases.setup]
 nixPkgs = ["python312"]
 
