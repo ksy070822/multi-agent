@@ -61,8 +61,24 @@ class TriageRequest(BaseModel):
 
 class TriageResponse(BaseModel):
     """Response model for triage endpoint."""
-    
+
     success: bool
     report: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+
+
+class QuestionRequest(BaseModel):
+    """Request model for question endpoint."""
+
+    question: str = Field(..., description="User's follow-up question")
+    pet_info: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Pet information (name, species, breed, age, weight)")
+    diagnosis_result: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Current diagnosis result")
+
+
+class QuestionResponse(BaseModel):
+    """Response model for question endpoint."""
+
+    success: bool
+    answer: Optional[str] = None
     error: Optional[str] = None
 
