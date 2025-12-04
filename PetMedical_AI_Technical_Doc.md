@@ -28,6 +28,37 @@ Medical Agent와 Triage Engine의 위험도 레벨, 응급도 점수, 병원 방
 
 ---
 
+## 이미지 처리 파이프라인
+
+**Canvas API 기반 품질 검증**
+
+클라이언트 사이드에서 업로드 이미지의 품질을 사전 검증한다. Laplacian Variance 알고리즘으로 흐림을 감지하고, 해상도와 밝기를 분석하여 0-100점 품질 점수를 산출한다. 품질 미달 시 재촬영을 권고하여 AI 분석 정확도를 높인다.
+
+```javascript
+// Laplacian Variance 흐림 감지
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+const laplacian = 4 * gray[idx] - gray[idx-1] - gray[idx+1] - gray[idx-width] - gray[idx+width];
+const variance = laplacianSqSum / count - mean * mean;  // variance < 100 = 흐림
+```
+
+**GPT-4o Vision 멀티모달 증상 분석**
+
+수의학 임상 프로토콜 기반의 6가지 필수 확인 카테고리를 구현했다. 이미지가 입력되면 외상(Wounds), 부종(Swelling), 피부이상(Skin), 안구이상(Eyes), 자세이상(Posture), 고통신호(Pain)를 누락 없이 체계적으로 스캔한다. 각 항목에 1-5점 심각도 점수를 부여하여 정량적 평가가 가능하며, 구조화된 `visual_findings` 형식으로 Medical Agent에 전달되어 진단 정확도를 높인다.
+
+```
+visual_findings: "[외상] 없음 | [부종] 좌측 귀 부기(3점) | [피부] 발적(4점) | [안구] 정상 | [자세] 머리 기울임(2점) | [고통] 귀 긁는 행동(3점)"
+```
+
+**진료과목별 사진 추천**
+
+피부과, 안과, 외과, 치과, 정형외과, 종양과 선택 시 "📷 사진추천" 뱃지를 표시하여 이미지 기반 진단이 효과적인 과목임을 안내한다.
+
+---
+
 ## 백엔드 Multi-Agent 시스템
 
 **LangGraph 기반 에이전트 파이프라인**
@@ -89,11 +120,13 @@ Firestore Update
 
 **기술 스택**
 
-- Frontend: React 18, Vite 5, TailwindCSS 3
+- Frontend: React 18, Vite 5, TailwindCSS 3, Canvas API
 - Backend: FastAPI, LangGraph, LangChain, Python 3.12
-- Database: Firestore (NoSQL), Google Sheets
-- AI: Claude Sonnet 4, Claude 3.5 Sonnet, GPT-4o, Gemini 2.0 Flash, Gemini 1.5 Pro
+- Database: Firebase Firestore (NoSQL), Google Sheets
+- Auth: Firebase Authentication
+- AI: Claude Sonnet 4, Claude 3.5 Sonnet, GPT-4o, GPT-4o-mini, Gemini 2.0 Flash, Gemini 1.5 Flash/Pro
 - API: Anthropic API, OpenAI API, Google AI API, Kakao Map API
+- Image Processing: Canvas API (Laplacian Variance), Base64 Encoding
 - Deploy: GitHub Pages (Frontend), Railway (Backend)
 
 **핵심 구현 파일**
@@ -105,6 +138,9 @@ src/services/ai/
 ├── collaborativeDiagnosis.js # 협진 검증 알고리즘 (240줄)
 ├── medicalAgent.js           # Claude 기반 의료 진단
 └── triageEngine.js           # 응급도 계산 엔진
+
+src/utils/
+└── imageQuality.js           # Canvas API 품질 검증 (Laplacian Variance)
 
 # Backend (petcare_advisor/)
 src/petcare_advisor/
