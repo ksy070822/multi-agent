@@ -92,7 +92,7 @@ Firestore Update
 - Frontend: React 18, Vite 5, TailwindCSS 3
 - Backend: FastAPI, LangGraph, LangChain, Python 3.12
 - Database: Firestore (NoSQL), Google Sheets
-- AI: Claude Sonnet 4, Claude 3.5 Sonnet, GPT-4o, Gemini 2.0 Flash, Gemini 1.5 Pro
+- AI: Claude Sonnet 4, Claude 3.5 Sonnet, GPT-4o, GPT-4o-mini, Gemini 2.0 Flash, Gemini 1.5 Flash/Pro
 - API: Anthropic API, OpenAI API, Google AI API, Kakao Map API
 - Deploy: GitHub Pages (Frontend), Railway (Backend)
 
