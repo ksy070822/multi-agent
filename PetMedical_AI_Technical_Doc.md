@@ -32,10 +32,10 @@ Medical Agent와 Triage Engine의 위험도 레벨, 응급도 점수, 병원 방
 
 **LangGraph 기반 에이전트 파이프라인**
 
-백엔드는 FastAPI + LangGraph로 구성된 5단계 순차 파이프라인을 실행한다. TRD(Tool Routing Dispatch) 규칙에 따라 한 번에 정확히 하나의 에이전트만 호출되며, 각 단계의 출력이 다음 단계의 입력으로 전달된다.
+백엔드는 FastAPI + LangGraph로 구성된 5단계 파이프라인을 실행한다. 의존성이 없는 단계(예: Vision 분석과 Symptom Intake)는 병렬로 실행하여 응답 시간을 단축한다. 이후 단계는 TRD(Tool Routing Dispatch) 규칙에 따라 순차 실행되며, 각 단계의 출력이 다음 단계의 입력으로 전달된다.
 
 ```
-사용자 입력 → Symptom Intake → Vision(선택) → Medical → Triage → Careplan → 최종 보고서
+사용자 입력 → [Symptom Intake ∥ Vision(선택)] → Medical → Triage → Careplan → 최종 보고서
 ```
 
 | 에이전트 | 역할 | 모델 |
@@ -49,6 +49,10 @@ Medical Agent와 Triage Engine의 위험도 레벨, 응급도 점수, 병원 방
 **GraphState 상태 관리**
 
 Pydantic 기반 GraphState가 에이전트 간 데이터를 관리한다. 각 에이전트의 결과는 `symptom_data`, `vision_data`, `medical_data`, `triage_data`, `careplan_data` 필드에 누적되어 최종 보고서 생성에 사용된다.
+
+**Fail-over 및 안정성**
+
+특정 모델의 응답 지연 또는 장애 발생 시 경량 모델(Gemini Flash, GPT-4o-mini)로 자동 대체하여 서비스 연속성을 보장한다.
 
 **API 엔드포인트**
 
